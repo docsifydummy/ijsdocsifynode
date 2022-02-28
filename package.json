@@ -1,0 +1,15 @@
+{
+  "name": "ijsdocsifynode",
+  "version": "1.0.0",
+  "description": "IJS Node Server for Docsify",
+  "main": "index.js",
+  "scripts": {
+    "test": "node ./index.js"
+  },
+  "author": "henryijs",
+  "license": "",
+  "dependencies": {
+    "express": "^4.17.3",
+    "extract-zip": "^2.0.1"
+  }
+}
