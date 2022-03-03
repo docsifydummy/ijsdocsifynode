@@ -12,9 +12,9 @@ function download(url, dest) {
                 const file = fs.createWriteStream(dest)
                 file.on('finish', () => resolve())
                 file.on('error', err => {
-                file.close()
-                if (err.code === 'EEXIST') reject('File already exists')
-                else fs.unlink(dest, () => reject(err.message)) // Delete temp file
+                    file.close()
+                    if (err.code === 'EEXIST') reject('File already exists')
+                    else fs.unlink(dest, () => reject(err.message)) // Delete temp file
                 })
                 response.pipe(file)
                 console.log('Download complete')
@@ -24,11 +24,11 @@ function download(url, dest) {
             } else {
                 reject(`Server responded with ${response.statusCode}: ${response.statusMessage}`)
             }
-            })
-            request.on('error', err => {
-                reject(err.message)
-            })
         })
+        request.on('error', err => {
+            reject(err.message)
+        })
+    })
 }
 
 async function extractZip(source, target) {
@@ -42,7 +42,7 @@ async function extractZip(source, target) {
 
 // Define the GitHub repo source
 const url = 'https://codeload.github.com/henryijs/ijsdocsify/zip/refs/heads/main'
-const zipFilename  = './main.zip'
+const zipFilename = './main.zip'
 const destDir = './docsify'
 
 // Download latest archive from GitHub
@@ -50,7 +50,7 @@ download(url, path.resolve(zipFilename)).then((response) => {
     // Extract the downloaded archive
     extractZip(path.resolve(zipFilename), path.resolve(destDir))
 })
-    
+
 // Use Express to serve HTTP for docsify
 const app = express()
 // Define HTTP port and path
