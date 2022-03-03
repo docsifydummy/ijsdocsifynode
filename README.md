@@ -6,8 +6,6 @@
 - Extract the source files of Docsify
 - Serve Docsify contents with Express HTTP
 
-# README.nd
-
 ## Dependencies
 
 - extract-zip
