@@ -80,3 +80,7 @@ typings/
 
 # Extracted folder
 docsify/
+
+# SSL Certificate and key file
+*.crt
+*.key
