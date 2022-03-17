@@ -45,16 +45,23 @@ async function downloadPrivate(url, token, dest) {
 }
 
 async function extractZip(source, target) {
-    if (fs.existsSync(source))
+    if (fs.existsSync(source)) {
+        if (fs.existsSync(target)) {
+            try {
+                fs.rmdirSync(target, { recursive: true })
+            } catch (error) {
+                console.log(error.message)
+            }
+        }
         try {
             await extract(source, { dir: target })
             console.log('Extraction complete')
         } catch (err) {
             console.log(err)
         }
-        else {
-            console.log('File doesn\'t exist')
-        }
+    } else {
+        console.log('File doesn\'t exist')
+    }
 }
 
 // Define file name and dir
@@ -62,7 +69,7 @@ const zipFilename = './main.zip'
 const destDir = './docsify'
 // Define the GitHub private repo source and API token
 const privateRepo = 'https://api.github.com/repos/henryijs/ijsdocsify-private/zipball/main'
-const accessToken = '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'
+const accessToken = 'yourtokenhere'
 
 // Download latest archive from GitHub
 downloadPrivate(privateRepo, accessToken, path.resolve(zipFilename)).then((res) => {
@@ -72,7 +79,7 @@ downloadPrivate(privateRepo, accessToken, path.resolve(zipFilename)).then((res) 
         const app = express()
         // Define path and SSL options
         const extractedFolder = fs.readdirSync(path.resolve('docsify'))
-        const httpPath = 'docsify/' + extractedFolder[0] + '/docs'
+        const httpPath = 'docsify/' + extractedFolder[extractedFolder.length - 1] + '/docs'
         const httpsOptions = {
             key: fs.readFileSync('ssl/private.key'),
             cert: fs.readFileSync('ssl/certificate.crt')
