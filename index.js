@@ -69,35 +69,56 @@ async function extractZip(source, target) {
 }
 
 async function startIPFSdaemon() {
-    const ipfsd = await Ctl.createController({
-        type: 'js',
-        test: false,
-        disposable: false,
-        ipfsHttpModule: require('ipfs-http-client'),
-        ipfsBin: require('ipfs').path(),
-    })
+    const factory = Ctl.createFactory(
+        {
+            type: 'js',
+            test: false,
+            disposable: false,
+            ipfsHttpModule: require('ipfs-http-client'),
+            ipfsBin: require('ipfs').path()
+        }
+    )
+    const ipfsd = await factory.spawn()
     await ipfsd.start()
     console.log(await ipfsd.api.id())
     console.log(await ipfsd.apiAddr.inspect())
     console.log(await ipfsd.gatewayAddr.inspect())
 
+    // Exit handler to stop ipfs daemon
     process.on('beforeExit', async () => {
         await ipfsd.stop()
+        // Fix the ipfsd.stop() kill signal doesn't delete the api file automatically caused cannot start up next time
+        if (fs.existsSync(path.resolve(ipfsd.path + '/api'))) {
+            try {
+                fs.rmSync(path.resolve(ipfsd.path + '/api'))
+            } catch (error) {
+                console.log(error.message)
+            }
+        }
         console.log(ipfsd.started.toString())
         process.exit()
     })
     process.stdin.resume();
     process.on('SIGINT', async () => {
         await ipfsd.stop()
-        console.log(ipfsd.started.toString())
+        // Fix the ipfsd.stop() kill signal doesn't delete the api file automatically caused cannot start up next time
+        if (fs.existsSync(path.resolve(ipfsd.path + '/api'))) {
+            try {
+                fs.rmSync(path.resolve(ipfsd.path + '/api'))
+            } catch (error) {
+                console.log(error.message)
+            }
+        }
+        console.log('Daemon started', ipfsd.started.toString())
         process.exit()
     })
 
-    if (ipfsd.started == true)
+    if (ipfsd.started == true) {
         return ipfsd.apiAddr.toString()
-    else
-        console.log('Cannot start IPFS daemon')
+    } else {
+        console.log('Cannot start IPFS daemon. Exiting...')
         process.exit(1)
+    }
 }
 
 async function uploadipfs(filesPath) {
@@ -145,6 +166,7 @@ downloadPrivate(privateRepo, accessToken, path.resolve(zipFilename)).then((res) 
         https.createServer(httpsOptions, app).listen(443, () => {
             console.log('Express app listening at https://localhost')
         })
+        // Start IPFS daemon and upload files
         uploadipfs(path.resolve('docsify/' + extractedFolder[extractedFolder.length - 1]))
     })
 })
