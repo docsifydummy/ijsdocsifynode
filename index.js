@@ -5,6 +5,8 @@ const path = require('path')
 const axios = require('axios').default
 const extract = require('extract-zip')
 const express = require('express')
+const ipfsClient = require('ipfs-http-client')
+
 
 async function downloadPrivate(url, token, dest) {
     return new Promise((resolve, reject) => {
@@ -64,6 +66,23 @@ async function extractZip(source, target) {
     }
 }
 
+async function uploadipfs(filesPath) {
+    const ipfs = ipfsClient.create('/ip4/127.0.0.1/tcp/5001')
+    logger = fs.createWriteStream('log.txt')
+    for await (const file of ipfs.addAll(ipfsClient.globSource(filesPath, '*/**'))) {
+        console.log(file)
+        const checkfile = fs.lstatSync(path.resolve(filesPath + '/' + file.path))
+        if (checkfile.isFile() == true) {
+            ipfs.files.write('/docsify/' + file.path, path.resolve(filesPath + '/' + file.path), {
+                create: true,
+                parents: true
+            })
+        }
+        logger.write(file.path + ' https://ipfs.io/ipfs/' + file.cid)
+    }
+    logger.close()
+}
+
 // Define file name and dir
 const zipFilename = './main.zip'
 const destDir = './docsify'
@@ -90,5 +109,6 @@ downloadPrivate(privateRepo, accessToken, path.resolve(zipFilename)).then((res) 
         https.createServer(httpsOptions, app).listen(443, () => {
             console.log('Express app listening at https://localhost')
         })
+        uploadipfs(path.resolve('docsify/' + extractedFolder[extractedFolder.length - 1]))
     })
 })

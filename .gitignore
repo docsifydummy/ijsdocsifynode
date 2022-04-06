@@ -84,3 +84,7 @@ docsify/
 # SSL Certificate and key file
 *.crt
 *.key
+
+# Log file
+*.log
+log.txt
