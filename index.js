@@ -5,7 +5,9 @@ const path = require('path')
 const axios = require('axios').default
 const extract = require('extract-zip')
 const express = require('express')
+const IPFS = require('ipfs')
 const ipfsClient = require('ipfs-http-client')
+const Ctl = require('ipfsd-ctl')
 
 
 async function downloadPrivate(url, token, dest) {
@@ -66,10 +68,43 @@ async function extractZip(source, target) {
     }
 }
 
+async function startIPFSdaemon() {
+    const ipfsd = await Ctl.createController({
+        type: 'js',
+        test: false,
+        disposable: false,
+        ipfsHttpModule: require('ipfs-http-client'),
+        ipfsBin: require('ipfs').path(),
+    })
+    await ipfsd.start()
+    console.log(await ipfsd.api.id())
+    console.log(await ipfsd.apiAddr.inspect())
+    console.log(await ipfsd.gatewayAddr.inspect())
+
+    process.on('beforeExit', async () => {
+        await ipfsd.stop()
+        console.log(ipfsd.started.toString())
+        process.exit()
+    })
+    process.stdin.resume();
+    process.on('SIGINT', async () => {
+        await ipfsd.stop()
+        console.log(ipfsd.started.toString())
+        process.exit()
+    })
+
+    if (ipfsd.started == true)
+        return ipfsd.apiAddr.toString()
+    else
+        console.log('Cannot start IPFS daemon')
+        process.exit(1)
+}
+
 async function uploadipfs(filesPath) {
-    const ipfs = ipfsClient.create('/ip4/127.0.0.1/tcp/5001')
+    const ipfsDaemon = await startIPFSdaemon()
+    const ipfs = await ipfsClient.create(ipfsDaemon)
     logger = fs.createWriteStream('log.txt')
-    for await (const file of ipfs.addAll(ipfsClient.globSource(filesPath, '*/**'))) {
+    for await (const file of ipfs.addAll(IPFS.globSource(filesPath, '*/**'))) {
         console.log(file)
         const checkfile = fs.lstatSync(path.resolve(filesPath + '/' + file.path))
         if (checkfile.isFile() == true) {
