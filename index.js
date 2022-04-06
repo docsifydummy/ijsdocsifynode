@@ -78,9 +78,10 @@ async function uploadipfs(filesPath) {
                 parents: true
             })
         }
-        logger.write(file.path + ' https://ipfs.io/ipfs/' + file.cid)
+        logger.write(file.path + ' https://ipfs.io/ipfs/' + file.cid + '\r\n')
     }
     logger.close()
+    console.log('IPFS upload completed')
 }
 
 // Define file name and dir
